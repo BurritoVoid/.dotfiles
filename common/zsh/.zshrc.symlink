@@ -1,0 +1,31 @@
+#!/bin/bash
+
+for file in $(find -H ~/.dotfiles/common -type f -name '*.zsh')
+do
+    source $file
+done
+
+# If this is the Macbook, just load the right directory
+if [[ "$(uname -s)" == "Darwin" ]]
+then
+    MACHNAME="burritovoid-macbook-pro"
+    if [[ -d ~/.dotfiles/hosts/$MACHNAME ]]
+    then
+        for file in $(find -H ~/.dotfiles/hosts/$MACHNAME -type f -name '*.zsh')
+        do
+            source $file
+        done
+    fi
+
+# If it's linux, load any scripts under that hosts' specific directory, if it exists...
+elif [[ "$(uname -s)" == "Linux" ]]
+then
+    MACHNAME=$(echo $HOST | tr '[:upper:]' '[:lower:]')
+    if [[ -d ~/.dotfiles/hosts/$MACHNAME ]]
+    then
+        for file in $(find -H ~/.dotfiles/hosts/$MACHNAME -type f -name '*.zsh')
+        do
+            source $file
+        done
+    fi
+fi

@@ -1,0 +1,64 @@
+#!/bin/bash
+
+set -e
+
+echo ''
+
+info () {
+  printf "\r  [ \033[00;34m..\033[0m ] $1\n"
+}
+
+user () {
+  printf "\r  [ \033[0;33m??\033[0m ] $1\n"
+}
+
+success () {
+  printf "\r\033[2K  [ \033[00;32mOK\033[0m ] $1\n"
+}
+
+fail () {
+  printf "\r\033[2K  [\033[0;31mFAIL\033[0m] $1\n"
+  echo ''
+  exit
+}
+
+link_file () {
+  local src=$1 dst=$2
+
+# If the destination already exists as a link, nuke it
+# If the destination already exists as a file or directory, rename it to .backup
+
+  if [ -L "$dst" ]
+  then
+    rm "$dst"
+    success "$dst was already a link. Nuking and relinking."
+  elif [ -f "$dst" -o -d "$dst" ]
+  then
+    mv "$dst" "${dst}.backup"
+    success "moved $dst to ${dst}.backup"
+  fi
+
+  ln -s "$1" "$2"
+  success "linked $1 to $2"
+
+}
+
+# Verify that dotfiles have been cloned directly into the home directory
+CURRENT_DIR=$( dirname -- "$( readlink -f -- "$0"; )" )
+DOTFILES_ROOT=$HOME/.dotfiles
+
+if [[ $CURRENT_DIR == $DOTFILES_ROOT ]]
+then
+    cd $DOTFILES_ROOT
+else
+    fail "Invalid install directory. This repo must be cloned into $HOME/.dotfiles"
+fi
+
+# Link all .symlink files to home
+for src in $(find -H $DOTFILES_ROOT -maxdepth 3 -name '*.symlink' -not -path '*.git*')
+  do
+    # echo $src
+    dst="$HOME/$(basename "${src%.*}")"
+    # echo $dst
+    link_file "$src" "$dst"
+  done
